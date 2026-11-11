@@ -30,7 +30,7 @@ You need a free [Supabase](https://supabase.com) project for accounts, sync, sha
 
 ## Download
 
-The deploy workflow packages the `extension` folder as `downloads/shelf-extension.zip` on the website, already set up for the site's own Supabase project. To install it: unzip, open `chrome://extensions`, turn on Developer mode, click "Load unpacked" and choose the unzipped `shelf-extension` folder.
+The deploy workflow packages the `extension` folder as `downloads/shelf-extension.zip` on the website, already set up for the site's own Supabase project. To install it: unzip, open `chrome://extensions`, turn on Developer mode, click "Load unpacked" and choose the unzipped folder (the one that contains `manifest.json`).
 
 ## Keys and secrets
 

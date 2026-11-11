@@ -45,7 +45,8 @@ jobs:
           cp -r extension build/shelf-extension
           cp site/config.js build/shelf-extension/config.js
           rm -f build/shelf-extension/*.sql
-          (cd build && zip -qr ../site/downloads/shelf-extension.zip shelf-extension)
+          # Files sit at the top of the zip, so "Extract all" on Windows gives one folder that holds manifest.json directly.
+          (cd build/shelf-extension && zip -qr ../../site/downloads/shelf-extension.zip .)
           ls -l site/downloads
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
