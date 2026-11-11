@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Shelf \u2013 Tab Organizer",
+  "version": "0.4.1",
+  "description": "Organize tabs into spaces, nested folders and collections. Search everything, auto-save sessions, sleep idle tabs and import bookmarks.",
+  "minimum_chrome_version": "121",
+  "permissions": [
+    "tabs",
+    "storage",
+    "unlimitedStorage",
+    "bookmarks",
+    "alarms",
+    "favicon"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Open Shelf",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Open Shelf"
+    }
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs9MmIStNE+VIidYLz+XaEIWgb58RktvdBkDhyfuAbz86+1ove+fFIzeFa9s2yNDJnxR/9rIOoEk/IwRpqEx5oJG0pj17m9xgs09nrIpYD3rN1sAQBAVa0iTkLoqk88WqbXu7bg0MJBmEmu8swvfWOTiMDf9SyqJp6p+MxUbRbNq4OEIKdG5y/t58vdkmqpVxI0vrHvedIJdgHbZCKUbcZfOXbKiKdtlpySEd5e4hdBZOHdyErZDXjrXIob026cwTgIghSxbXZHXmHDRvG7CSeGMBeXDVKs0fUccgeu/XTveEFJ4ABTbBLvMrzJfEcJunV5cBegNSRINvMWrX91xiAwIDAQAB",
+  "host_permissions": [
+    "https://*.supabase.co/*"
+  ],
+  "homepage_url": "https://github.com/alqushaibi/shelf"
+}

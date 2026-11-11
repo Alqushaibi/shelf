@@ -1,0 +1,20 @@
+# Your own Supabase settings. Copy config.example.js to config.js; never commit config.js.
+extension/config.js
+site/config.js
+
+# Keys and local files
+*.pem
+*.key
+.env
+.env.*
+.DS_Store
+Thumbs.db
+node_modules/
+*.zip
+
+# Database scripts are kept out of the public repository
+*.sql
+
+# Built by the deploy workflow
+build/
+site/downloads/

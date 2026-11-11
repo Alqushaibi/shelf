@@ -1,0 +1,55 @@
+# Publishes the site/ folder to GitHub Pages.
+# The Supabase settings are not in the repository: they come from two repository variables
+# (Settings > Secrets and variables > Actions > Variables): SUPABASE_URL and SUPABASE_KEY.
+name: Deploy website
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'extension/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write site/config.js from repository variables
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ vars.SUPABASE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "Set the repository variables SUPABASE_URL and SUPABASE_KEY first." >&2
+            exit 1
+          fi
+          case "$SUPABASE_KEY" in
+            sb_secret_*) echo "SUPABASE_KEY must be the publishable key, not a secret key." >&2; exit 1 ;;
+          esac
+          printf "export const SUPABASE_URL = '%s';\nexport const SUPABASE_KEY = '%s';\n" "$SUPABASE_URL" "$SUPABASE_KEY" > site/config.js
+      - name: Package the extension so visitors can download it
+        run: |
+          mkdir -p build site/downloads
+          cp -r extension build/shelf-extension
+          cp site/config.js build/shelf-extension/config.js
+          rm -f build/shelf-extension/*.sql
+          (cd build && zip -qr ../site/downloads/shelf-extension.zip shelf-extension)
+          ls -l site/downloads
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

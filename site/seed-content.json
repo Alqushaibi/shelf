@@ -1,0 +1,222 @@
+{
+  "brand": {
+    "name": "Shelf",
+    "logoUrl": "assets/logo.svg",
+    "pageTitle": "Shelf – your tabs, organized",
+    "description": "Shelf organizes browser tabs into spaces, nested folders and collections, and keeps them in sync across your browsers."
+  },
+  "theme": {
+    "accent": "#2456E6",
+    "dark": "#14181F",
+    "background": "#F4F5F7"
+  },
+  "nav": [
+    {
+      "label": "Features",
+      "href": "#features"
+    },
+    {
+      "label": "Get Shelf",
+      "href": "#platforms"
+    },
+    {
+      "label": "Questions",
+      "href": "#faq"
+    }
+  ],
+  "navButton": {
+    "label": "Get Shelf",
+    "href": "#platforms"
+  },
+  "hero": {
+    "title": "Your tabs, always in order.",
+    "subtitle": "Organized. Searchable. Private. Synced.",
+    "text": "Shelf turns a crowded tab strip into spaces, nested folders and collections you can find again, in every browser you sign in to.",
+    "primaryButton": {
+      "label": "Get Shelf",
+      "href": "#platforms"
+    },
+    "secondaryButton": {
+      "label": "See the features",
+      "href": "#features"
+    },
+    "imageUrl": ""
+  },
+  "highlights": {
+    "show": true,
+    "title": "What you get",
+    "items": [
+      "Spaces, nested folders and collections",
+      "Collapsible collections",
+      "Notes and tasks on every collection",
+      "One search for tabs, links, notes and tasks",
+      "Automatic session saving",
+      "Sleeping idle tabs to free memory",
+      "Duplicate tab clean-up",
+      "Bookmark import with folders kept",
+      "Sync across browsers",
+      "Private by default, shared when you choose",
+      "Sign out of every browser at once"
+    ]
+  },
+  "features": {
+    "show": true,
+    "title": "Built for people with too many tabs",
+    "items": [
+      {
+        "icon": "folder",
+        "title": "Folders inside folders",
+        "text": "Group collections into folders, and folders into other folders, as deep as your work needs. Drag a collection or a whole folder to move it."
+      },
+      {
+        "icon": "search",
+        "title": "Find anything with one shortcut",
+        "text": "Press Ctrl+K to search open tabs in every window, saved links, notes, tasks and folders, or to run a command without touching the mouse."
+      },
+      {
+        "icon": "clock",
+        "title": "Sessions that save themselves",
+        "text": "Every window is saved on a timer. Restore a whole session after a crash, or turn it into a collection to keep."
+      },
+      {
+        "icon": "moon",
+        "title": "A lighter browser",
+        "text": "Put idle tabs to sleep to free memory and close duplicates in one click. Sleeping tabs stay where they are and wake when you click them."
+      },
+      {
+        "icon": "download",
+        "title": "Bring your bookmarks",
+        "text": "Import from your browser, a bookmarks file, or a JSON or CSV export from another tool. Your folder structure arrives as nested folders, and duplicates are skipped."
+      },
+      {
+        "icon": "people",
+        "title": "Private, until you share",
+        "text": "Every space is yours alone until you invite someone by email, to edit or only to view. Make it private again whenever you like."
+      },
+      {
+        "icon": "sync",
+        "title": "The same shelf everywhere",
+        "text": "Sign in with email or Google and your spaces follow you to every browser. See each signed-in browser and sign out of all of them at once."
+      }
+    ]
+  },
+  "platforms": {
+    "show": true,
+    "title": "Get Shelf",
+    "text": "Shelf runs in Chromium browsers. Download the zip, unzip it, open the Extensions page, turn on Developer mode and choose \"Load unpacked\".",
+    "items": [
+      {
+        "label": "Chrome",
+        "note": "Download the zip",
+        "href": "downloads/shelf-extension.zip"
+      },
+      {
+        "label": "Edge",
+        "note": "Download the zip",
+        "href": "downloads/shelf-extension.zip"
+      },
+      {
+        "label": "Brave",
+        "note": "Download the zip",
+        "href": "downloads/shelf-extension.zip"
+      }
+    ]
+  },
+  "testimonials": {
+    "show": false,
+    "title": "What people say",
+    "items": []
+  },
+  "stats": {
+    "show": true,
+    "title": "Shelf in numbers",
+    "membersLabel": "Members",
+    "spacesLabel": "Spaces",
+    "collectionsLabel": "Collections",
+    "linksLabel": "Saved tabs"
+  },
+  "callToAction": {
+    "show": true,
+    "title": "Clear your tab strip today",
+    "text": "No ads. Your data stays yours.",
+    "button": {
+      "label": "Get Shelf",
+      "href": "#platforms"
+    }
+  },
+  "donation": {
+    "show": false,
+    "showInExtension": true,
+    "title": "Support Shelf",
+    "text": "Shelf is built and maintained independently. If it saves you time, a donation helps keep it going.",
+    "buttonLabel": "Donate",
+    "url": ""
+  },
+  "faq": {
+    "show": true,
+    "title": "Questions",
+    "items": [
+      {
+        "q": "Do I need an account?",
+        "a": "No. Without an account Shelf works fully, with your data stored in that browser only. An account adds sync between browsers and sharing."
+      },
+      {
+        "q": "Does Shelf replace my new tab page?",
+        "a": "Only if you ask it to. Settings has a switch to open Shelf in every new tab, and another to open it when the browser starts."
+      },
+      {
+        "q": "Who can see my saved tabs?",
+        "a": "Only you, unless you share a space. People you invite see that space and nothing else."
+      },
+      {
+        "q": "What happens when I sign out?",
+        "a": "Your data stays in your account and is removed from that browser. It returns when you sign in again."
+      }
+    ]
+  },
+  "footer": {
+    "groups": [
+      {
+        "title": "Shelf",
+        "links": [
+          {
+            "label": "Features",
+            "href": "#features"
+          },
+          {
+            "label": "Get Shelf",
+            "href": "#platforms"
+          },
+          {
+            "label": "Questions",
+            "href": "#faq"
+          }
+        ]
+      },
+      {
+        "title": "Legal",
+        "links": [
+          {
+            "label": "Privacy Policy",
+            "href": "privacy.html"
+          },
+          {
+            "label": "Terms of Use",
+            "href": "terms.html"
+          }
+        ]
+      }
+    ],
+    "copyright": "© Shelf. All rights reserved."
+  },
+  "pages": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "body": "DRAFT – review and adapt this text before publishing. It is a starting point, not legal advice.\n\n## What Shelf stores\nShelf stores the things you save in it: spaces, folders, collections, saved links with their titles and notes, and tasks. Without an account this stays in your browser only.\n\n## When you create an account\nIf you sign in, the items above are stored on our servers so they can sync between your browsers. We also store your email address, and a list of the browsers you are signed in on (browser name, operating system and the time last active) so you can sign them out.\n\n## Signing in with Google\nIf you choose Google sign-in, we receive your email address and basic profile information from Google. We do not receive your Google password.\n\n## Sharing\nIf you share a space, the people you invite by email can see that space. Nothing else in your account is visible to them.\n\n## What Shelf does not do\n- It does not sell your data.\n- It does not show advertising.\n- It does not read the content of the pages you visit. It records only the address and title of tabs you choose to save, and of open tabs when sessions are saved in your browser.\n\n## Where data is kept\nAccount data is hosted with Supabase. Session history and settings stay in your browser and are not uploaded.\n\n## Deleting your data\nDeleting a space, folder or collection removes it from your account. To delete your whole account, contact us.\n\n## Contact\n[ADD YOUR CONTACT EMAIL]"
+    },
+    "terms": {
+      "title": "Terms of Use",
+      "body": "DRAFT – review and adapt this text before publishing. It is a starting point, not legal advice.\n\n## Using Shelf\nShelf is a tool for organizing browser tabs and bookmarks. You may use it for personal and work purposes.\n\n## Your account\nYou are responsible for keeping your sign-in details safe and for what is saved or shared from your account.\n\n## Your content\nWhat you save in Shelf remains yours. You are responsible for the links you save and share.\n\n## Acceptable use\n- Do not use Shelf to share unlawful content.\n- Do not attempt to access other people's data or disrupt the service.\n\n## Availability\nShelf is provided as it is, without guarantees of uninterrupted availability. Keep your own copies of anything critical.\n\n## Changes\nThese terms may be updated. The current version is always on this page.\n\n## Contact\n[ADD YOUR CONTACT EMAIL]"
+    }
+  }
+}

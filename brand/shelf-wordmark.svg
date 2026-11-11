@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 236 64" role="img" aria-label="Shelf">
+  <rect width="64" height="64" rx="15" fill="#2456E6"/>
+  <rect x="13" y="22" width="9" height="23" rx="2.6" fill="#FFFFFF"/>
+  <rect x="25" y="14" width="9" height="31" rx="2.6" fill="#FFFFFF"/>
+  <rect x="38" y="19" width="9" height="26" rx="2.6" fill="#FFFFFF" fill-opacity=".72" transform="rotate(-13 47 45)"/>
+  <rect x="9" y="46.5" width="46" height="5" rx="2.5" fill="#FFFFFF"/>
+  <text x="82" y="46" font-family="Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif" font-size="44" font-weight="700" letter-spacing="-1.5" fill="#14181F">Shelf</text>
+</svg>
