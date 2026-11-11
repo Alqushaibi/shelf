@@ -273,24 +273,47 @@ function loginView() {
   const email = h('input', { class: 'input', id: 'em', type: 'email', required: true, autocomplete: 'email', inputMode: 'email' });
   const pw = h('input', { class: 'input', id: 'pw', type: 'password', required: true, minLength: signup ? 8 : 1, autocomplete: signup ? 'new-password' : 'current-password' });
   const msg = h('p', { class: 'small', role: 'alert' });
-  const run = async (fn) => { msg.className = 'small muted'; msg.textContent = 'Working…'; try { await fn(); } catch (e) { msg.className = 'small err'; msg.textContent = e.message; } };
+  const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  const run = async (fn) => {
+    msg.className = 'small muted'; msg.textContent = 'Working…';
+    try { await fn(); }
+    catch (e) {
+      if (/not confirmed/i.test(e.message)) { ui.pendingEmail = email.value.trim(); return render(); }
+      msg.className = 'small err'; msg.textContent = e.message;
+    }
+  };
+  const forgot = async () => {
+    const addr = await ask('Reset your password', email.value.trim(), 'Account email', 'Send link');
+    if (!addr) return;
+    if (!validEmail(addr)) return toast('Enter a valid email address.');
+    try { await raw('/auth/v1/recover', { method: 'POST', body: { email: addr } }); toast('If that address has an account, a reset link is on its way.'); } catch (e) { toast(e.message); }
+  };
+  const pending = ui.pendingEmail ? h('div', { class: 'banner', role: 'status' }, h('b', {}, 'Confirm your email'), h('span', {}, `We sent a link to ${ui.pendingEmail}. Open it to confirm the address, then sign in here.`),
+    h('button', { type: 'button', class: 'btn', onclick: async () => { try { await raw('/auth/v1/resend', { method: 'POST', body: { type: 'signup', email: ui.pendingEmail } }); toast('Confirmation email sent again.'); } catch (e) { toast(e.message); } } }, 'Send again')) : null;
   const entered = async (d) => { setSession(toSession(d)); render(); await load(); };
   const tab = (label, mode) => h('button', { type: 'button', 'aria-pressed': String(ui.authMode === mode), onclick: () => { ui.authMode = mode; render(); } }, label);
   return h('form', { class: 'login', onsubmit: (e) => {
     e.preventDefault();
     run(async () => {
-      if (!signup) return entered(await raw('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: email.value.trim(), password: pw.value } }));
-      const d = await raw('/auth/v1/signup', { method: 'POST', body: { email: email.value.trim(), password: pw.value } });
+      const addr = email.value.trim();
+      if (!validEmail(addr)) throw new Error('Enter a valid email address.');
+      if (!signup) { const s = await raw('/auth/v1/token?grant_type=password', { method: 'POST', body: { email: addr, password: pw.value } }); ui.pendingEmail = null; return entered(s); }
+      const d = await raw('/auth/v1/signup', { method: 'POST', body: { email: addr, password: pw.value } });
       if (d && d.access_token) return entered(d);
-      ui.authMode = 'signin'; render(); toast('Check your email and tap the confirmation link, then sign in here.');
+      ui.authMode = 'signin';
+      if (Array.isArray(d && d.identities) && d.identities.length === 0) { ui.pendingEmail = null; render(); return toast('That email already has an account. Sign in, or use "Forgot password?".'); }
+      ui.pendingEmail = addr; render();
     });
   } },
     h('img', { src: 'icons/icon-192.png', alt: '' }), h('h1', {}, 'Shelf'), h('p', { class: 'muted' }, ui.share ? 'Sign in to save the page you shared.' : 'Your saved tabs, folders and collections on this device.'),
+    pending,
     h('div', { class: 'seg' }, tab('Sign in', 'signin'), tab('Create account', 'signup')),
     h('button', { type: 'button', class: 'btn block', onclick: () => { if (ui.share) ls.set('shelf-app-share', ui.share); location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin + location.pathname)}`; } }, 'Continue with Google'),
     h('p', { class: 'small muted', style: 'text-align:center' }, 'or use your email'),
     h('label', { for: 'em' }, 'Email'), email, h('label', { for: 'pw' }, 'Password'), pw,
-    h('button', { type: 'submit', class: 'btn primary block' }, signup ? 'Create account' : 'Sign in'), msg);
+    signup ? h('p', { class: 'small muted' }, 'At least 8 characters. We email you a link to confirm the address before you can sign in.') : null,
+    h('button', { type: 'submit', class: 'btn primary block' }, signup ? 'Create account' : 'Sign in'),
+    signup ? null : h('button', { type: 'button', class: 'btn block', style: 'border:0;background:transparent;color:var(--blue)', onclick: forgot }, 'Forgot password?'), msg);
 }
 function collectionCard(c, editable) {
   const open = ui.open.has(c.id), items = c.items || [], tasks = c.tasks || [], done = tasks.filter((t) => t.done).length;

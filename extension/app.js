@@ -683,7 +683,26 @@ function accountView() {
     const email = h('input', { class: 'input', id: 'auth-email', type: 'email', required: true, autocomplete: 'email' });
     const pw = h('input', { class: 'input', id: 'auth-pw', type: 'password', required: true, minLength: signup ? 8 : 1, autocomplete: signup ? 'new-password' : 'current-password' });
     const msg = h('p', { class: 'small', role: 'alert' });
-    const run = async (fn) => { msg.style.color = 'var(--mute)'; msg.textContent = 'Working…'; try { await fn(); } catch (e) { msg.style.color = 'var(--warn)'; msg.textContent = e.message; } };
+    const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+    const run = async (fn) => {
+      msg.style.color = 'var(--mute)'; msg.textContent = 'Working…';
+      try { await fn(); }
+      catch (e) {
+        if (/not confirmed/i.test(e.message)) { ui.pendingEmail = email.value.trim(); return render(); }
+        msg.style.color = 'var(--warn)'; msg.textContent = e.message;
+      }
+    };
+    const forgot = async () => {
+      const inp = h('input', { class: 'input', type: 'email', value: email.value.trim(), required: true, 'aria-label': 'Email', placeholder: 'you@example.com' });
+      const addr = await modal('Reset your password', h('div', { class: 'stack' }, h('p', { class: 'muted' }, 'Enter your account email. We will send a link to choose a new password.'), inp), 'Send link', () => inp.value.trim());
+      if (!addr) return;
+      if (!validEmail(addr)) return toast('Enter a valid email address.');
+      try { await C.requestPasswordReset(addr); toast('If that address has an account, a reset link is on its way. Check your inbox and spam folder.'); }
+      catch (e) { toast(e.message); }
+    };
+    const pending = ui.pendingEmail ? h('div', { class: 'banner', role: 'status' }, h('div', { class: 'grow', style: 'flex-basis:220px' }, h('b', {}, 'Confirm your email. '),
+      `We sent a link to ${ui.pendingEmail}. Open it to confirm the address, then sign in here.`),
+      h('button', { type: 'button', class: 'btn', onclick: async () => { try { await C.resendConfirmation(ui.pendingEmail); toast('Confirmation email sent again.'); } catch (e) { toast(e.message); } } }, 'Send again')) : null;
     const entered = async (s) => { cloud.session = s; ui.view = 'space'; render(); toast('Signed in. Syncing your data…'); await syncNow(); };
     const tab = (label, on, mode) => h('button', { type: 'button', class: 'btn grow' + (on ? ' sel' : ''), 'aria-pressed': String(on), onclick: () => { ui.authMode = mode; render(); } }, label);
     return [
@@ -691,19 +710,25 @@ function accountView() {
       h('form', { class: 'panel', style: 'max-width:440px', onsubmit: (e) => {
         e.preventDefault();
         run(async () => {
-          if (!signup) return entered(await C.signIn(email.value.trim(), pw.value));
-          const r = await C.signUp(email.value.trim(), pw.value);
+          const addr = email.value.trim();
+          if (!validEmail(addr)) throw new Error('Enter a valid email address.');
+          if (!signup) { const s = await C.signIn(addr, pw.value); ui.pendingEmail = null; return entered(s); }
+          const r = await C.signUp(addr, pw.value);
           if (r.session) return entered(r.session);
-          ui.authMode = 'signin'; render(); toast('Check your email and click the confirmation link, then sign in here.');
+          ui.authMode = 'signin';
+          if (r.exists) { ui.pendingEmail = null; render(); return toast('That email already has an account. Sign in, or use "Forgot password?".'); }
+          ui.pendingEmail = addr; render();
         });
       } },
+        pending,
         h('div', { class: 'row' }, tab('Sign in', !signup, 'signin'), tab('Create account', signup, 'signup')),
         h('button', { type: 'button', class: 'btn', style: 'justify-content:center', onclick: () => run(async () => entered(await C.signInGoogle())) }, 'Continue with Google'),
         h('div', { class: 'small muted', style: 'text-align:center' }, 'or use your email'),
         h('label', { for: 'auth-email' }, 'Email'), email,
         h('label', { for: 'auth-pw' }, 'Password'), pw,
-        signup ? h('div', { class: 'small muted' }, 'At least 8 characters. You will get an email with a link to confirm the address.') : null,
-        h('button', { type: 'submit', class: 'btn primary', style: 'justify-content:center' }, signup ? 'Create account' : 'Sign in'), msg),
+        signup ? h('div', { class: 'small muted' }, 'At least 8 characters. We email you a link to confirm the address before you can sign in.') : null,
+        h('button', { type: 'submit', class: 'btn primary', style: 'justify-content:center' }, signup ? 'Create account' : 'Sign in'),
+        signup ? null : h('button', { type: 'button', class: 'fname', style: 'color:var(--blue);font-weight:500;min-height:36px;align-self:flex-start', onclick: forgot }, 'Forgot password?'), msg),
       h('p', { class: 'muted small' }, 'Without an account Shelf keeps working, with data stored in this browser only. Anything already here is uploaded to your account when you sign in.'),
     ];
   }

@@ -53,13 +53,17 @@ export const storedSession = () => getK('auth');
 export async function signUp(email, password) {
   const d = await raw('/auth/v1/signup', { method: 'POST', body: { email, password } });
   if (d && d.access_token) { const s = toSession(d); await setK('auth', s); return { session: s }; }
-  return { confirm: true }; // email confirmation is required before the first sign-in
+  // A confirmation email was sent. An empty identities list means the address already has an account.
+  return { confirm: true, exists: Array.isArray(d && d.identities) && d.identities.length === 0 };
 }
 export async function signIn(email, password) {
   const s = toSession(await raw('/auth/v1/token?grant_type=password', { method: 'POST', body: { email, password } }));
   await setK('auth', s);
   return s;
 }
+export const resendConfirmation = (email) => raw('/auth/v1/resend', { method: 'POST', body: { type: 'signup', email } });
+// Sends an email with a link to the website's password page. Supabase answers the same way whether or not the address has an account.
+export const requestPasswordReset = (email) => raw('/auth/v1/recover', { method: 'POST', body: { email } });
 export const googleRedirectUrl = () => `https://${chrome.runtime.id}.chromiumapp.org/`;
 // Opens Google sign-in in a small window and watches for the address Supabase sends the browser back to.
 // That address carries the session. It is read here whether Supabase returns to the extension's own

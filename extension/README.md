@@ -38,6 +38,7 @@ Then in Shelf, click **Sign in to sync** at the bottom of the sidebar.
 
 - **Sync** – spaces, folders, collections, notes and tasks sync to every browser signed in to the account. Shelf syncs when it opens, a moment after each change, and every 30 seconds while open. If two browsers change the same collection, the most recent change wins.
 - **Sharing** – open a space and click **Share** to add collaborators by email as "Can edit" or "Can view", or to make the space private again. A space is private until you add someone.
+- **Email confirmation and password reset** – new email accounts must confirm their address from an emailed link before signing in ("Send again" resends it). "Forgot password?" emails a link to the website's `auth.html` page, where a new password is chosen. Both need the Supabase Site URL set to the website's address.
 - **Signed-in browsers** – the Account screen lists every browser and can sign out one, all others, or all of them. Signing out removes Shelf data from that browser; it returns on the next sign-in.
 
 ## Donation button
@@ -48,7 +49,6 @@ When the site admin turns donations on (see the website's `admin.html`), a Donat
 
 - Session history and the sleep / auto-save rules stay on each browser and are not synced.
 - Sharing is per space, not per collection.
-- No "forgot password" flow yet (it needs a hosted page). Password change works when signed in.
 - Checking imported links for dead pages.
 
 ## Files

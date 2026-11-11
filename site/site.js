@@ -130,6 +130,8 @@ function page(c, slug) {
 }
 
 async function start() {
+  // Email confirmation and password reset links come back to the site's address. Hand them to the account page.
+  if (/(^|[#&])(access_token|error_code|error_description)=/.test(location.hash)) { location.replace('auth.html' + location.hash); return; }
   const root = document.getElementById('site');
   const slug = document.body.dataset.page || '';
   let c;

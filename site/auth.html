@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Shelf account</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="site.css">
+<style>
+.auth{max-width:440px;margin:64px auto;padding:28px;background:var(--card);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:14px}
+.auth img{width:48px;height:48px;border-radius:12px}
+.auth h1{font-size:26px;letter-spacing:-.02em}
+.auth p{color:var(--ink2)}
+.auth label{font-weight:600;font-size:14px}
+.auth input{width:100%;min-height:48px;padding:10px 12px;border-radius:10px;border:1px solid #A7B0BD;font:inherit}
+.auth button{cursor:pointer;font:inherit;font-weight:600}
+.auth .err{color:#8A3B12}
+body{padding:0 16px}
+</style>
+</head>
+<body>
+<main id="auth" class="auth"><p role="status">Loading…</p></main>
+<script type="module" src="auth.js"></script>
+</body>
+</html>
