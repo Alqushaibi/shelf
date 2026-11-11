@@ -18,6 +18,8 @@ Shelf does not replace the new tab page unless you ask it to: **Settings** has s
 
 - **Spaces, nested folders, collections** – any depth. Drag a collection or folder onto another folder (in the page or the sidebar) to move it.
 - **Saving tabs** – drag an open tab onto a collection, use the + on a tab, or "Save all".
+- **Reorder by dragging** – drag a link above or below another link, in the same or another collection; drag a collection by its title onto another collection to place it before or after. The order of collections syncs once the database has the `position` column (see below).
+- **Hide the sidebars** – the two buttons at the top corners of the page hide or show the left sidebar and the open-tabs panel.
 - **Collapse and expand** – the arrow on a collection folds it to one line; "Collapse all" / "Expand all" does the whole view. Remembered per browser.
 - **Notes and tasks** – per link (title and note) and per collection (checklist and note).
 - **Search and commands** – `Ctrl+K` searches open tabs in every window, saved links, notes, tasks, collections and folders. Type `>` for commands only.

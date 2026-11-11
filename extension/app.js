@@ -49,6 +49,8 @@ const ICONS = {
   people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5a3.5 3.5 0 0 1 0 7M18 14.5a6 6 0 0 1 3.5 5.5"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
   heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  panelL: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
+  panelR: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
   check: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
 };
 function ic(name, size = 16) {
@@ -115,19 +117,56 @@ function go(spaceId, folderId = null) {
 }
 
 /* ---------- drag and drop ---------- */
-const drag = (data) => ({ draggable: true, ondragstart: (e) => { e.dataTransfer.setData(DT, JSON.stringify(data)); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); } });
-function dropzone(el, onDrop) {
-  el.addEventListener('dragover', (e) => { if ([...e.dataTransfer.types].includes(DT)) { e.preventDefault(); el.classList.add('over'); } });
-  el.addEventListener('dragleave', () => el.classList.remove('over'));
+// The kind of thing being dragged is also set as its own type, so a drop target can tell what is over it before the drop.
+const drag = (data) => ({ draggable: true, ondragstart: (e) => { e.dataTransfer.setData(DT, JSON.stringify(data)); e.dataTransfer.setData(DT + '-' + data.kind, '1'); e.dataTransfer.effectAllowed = 'move'; e.stopPropagation(); } });
+// opts.kinds limits what the target accepts. opts.axis maps a kind to 'x' or 'y' for targets where the
+// drop position matters: onDrop then gets 'before' or 'after', by which half of the target the pointer is in.
+function dropzone(el, onDrop, opts = {}) {
+  const kindOf = (e) => { const t = [...e.dataTransfer.types]; if (!t.includes(DT)) return null; const k = t.find((x) => x.startsWith(DT + '-')); return k ? k.slice(DT.length + 1) : 'any'; };
+  const accepts = (k) => k && (!opts.kinds || opts.kinds.includes(k));
+  const sideOf = (e, k) => {
+    const axis = opts.axis && opts.axis[k]; if (!axis) return null;
+    const r = el.getBoundingClientRect();
+    return (axis === 'y' ? e.clientY < r.top + r.height / 2 : e.clientX < r.left + r.width / 2) ? 'before' : 'after';
+  };
+  const clear = () => el.classList.remove('over', 'drop-before', 'drop-after');
+  el.addEventListener('dragover', (e) => { const k = kindOf(e); if (!accepts(k)) return; e.preventDefault(); e.stopPropagation(); clear(); const s = sideOf(e, k); el.classList.add(s ? 'drop-' + s : 'over'); });
+  el.addEventListener('dragleave', clear);
   el.addEventListener('drop', (e) => {
-    el.classList.remove('over');
+    const k = kindOf(e); clear(); if (!accepts(k)) return;
     const raw = e.dataTransfer.getData(DT); if (!raw) return;
-    e.preventDefault(); e.stopPropagation(); onDrop(JSON.parse(raw));
+    const d = JSON.parse(raw);
+    e.preventDefault(); e.stopPropagation(); onDrop(d, sideOf(e, d.kind));
   });
   return el;
 }
+const sortCols = (list) => [...list].sort((a, b) => (a.position ?? 1e9) - (b.position ?? 1e9));
 function addTab(c, t) { if (isWeb(t.url) && !c.items.some((i) => i.url === t.url)) { c.items.push(mkItem(t.url, t.title)); return true; } return false; }
-function dropOnCollection(c, d) {
+// Dropping on a link inside a collection: put the dragged link or tab just before or after it.
+function dropOnItem(c, target, d, side) {
+  let moving;
+  if (d.kind === 'tab') {
+    const t = allTabs.find((x) => x.id === d.tabId); if (!t || !isWeb(t.url)) return;
+    if (c.items.some((i) => i.url === t.url)) return toast('That tab is already in this collection.');
+    moving = mkItem(t.url, t.title);
+  } else {
+    const src = state.collections.find((x) => x.id === d.colId); if (!src) return;
+    const i = src.items.findIndex((x) => x.id === d.itemId); if (i < 0 || src.items[i] === target) return;
+    [moving] = src.items.splice(i, 1);
+  }
+  const at = c.items.indexOf(target) + (side === 'after' ? 1 : 0);
+  c.items.splice(at, 0, moving);
+  commit();
+}
+function dropOnCollection(c, d, side) {
+  if (d.kind === 'col') { // reorder: place the dragged collection before or after this one
+    const m = state.collections.find((x) => x.id === d.colId); if (!m || m === c) return;
+    m.spaceId = c.spaceId; m.folderId = c.folderId || null;
+    const list = sortCols(colsIn(c.spaceId, c.folderId)).filter((x) => x !== m);
+    list.splice(list.indexOf(c) + (side === 'after' ? 1 : 0), 0, m);
+    list.forEach((x, i) => { if (x.position !== i + 1) x.position = i + 1; });
+    return commit();
+  }
   if (d.kind === 'tab') { const t = allTabs.find((x) => x.id === d.tabId); if (!t || !addTab(c, t)) return toast('That tab is already in this collection.'); }
   else if (d.kind === 'item') {
     const src = state.collections.find((x) => x.id === d.colId); if (!src || src === c) return;
@@ -261,7 +300,7 @@ function setCollapsed(cols, on) {
 }
 function collectionCard(c) {
   const done = c.tasks.filter((t) => t.done).length;
-  const items = c.items.map((it) => h('div', { class: 'item', ...drag({ kind: 'item', colId: c.id, itemId: it.id }) },
+  const items = c.items.map((it) => dropzone(h('div', { class: 'item', title: 'Drag to reorder', ...drag({ kind: 'item', colId: c.id, itemId: it.id }) },
     fav(it.url),
     h('div', { class: 'grow' },
       h('button', { class: 't ellip', title: it.url, onclick: () => openUrl(it.url) }, it.title),
@@ -272,7 +311,8 @@ function collectionCard(c) {
         const n = h('textarea', { 'aria-label': 'Note', placeholder: 'Note' }, it.note || '');
         if (await modal('Edit link', h('div', { class: 'stack' }, t, n))) { it.title = t.value.trim() || it.url; it.note = n.value.trim(); commit(); }
       }),
-      ibtn('x', 'Remove from collection', () => { c.items = c.items.filter((x) => x !== it); commit(); }))));
+      ibtn('x', 'Remove from collection', () => { c.items = c.items.filter((x) => x !== it); commit(); }))),
+    (d, side) => dropOnItem(c, it, d, side), { kinds: ['item', 'tab'], axis: { item: 'y', tab: 'y' } }));
   const addTask = h('input', { class: 'input', placeholder: 'Add a task and press Enter', 'aria-label': 'New task', onkeydown: (e) => {
     if (e.key === 'Enter' && e.target.value.trim()) { c.tasks.push({ id: S.uid(), text: e.target.value.trim(), done: false }); ui.openDetails = c.id; commit(); }
   } });
@@ -287,7 +327,7 @@ function collectionCard(c) {
       h('textarea', { placeholder: 'Collection note', 'aria-label': 'Collection note', onchange: (e) => { c.note = e.target.value; S.save(state); } }, c.note || '')));
   const collapsed = isCollapsed(c);
   const card = h('section', { class: 'card' + (collapsed ? ' collapsed' : '') },
-    h('header', { ...drag({ kind: 'col', colId: c.id }), title: 'Drag onto a folder to move' },
+    h('header', { ...drag({ kind: 'col', colId: c.id }), title: 'Drag onto another collection to reorder, or onto a folder to move' },
       h('button', { class: 'ibtn', 'aria-expanded': String(!collapsed), 'aria-label': (collapsed ? 'Expand ' : 'Collapse ') + c.name, title: collapsed ? 'Expand' : 'Collapse', onclick: () => setCollapsed([c], !collapsed) }, ic(collapsed ? 'right' : 'down')),
       h('h2', { class: 'grow ellip' }, c.name),
       h('span', { class: 'small muted' }, c.items.length + (c.items.length === 1 ? ' tab' : ' tabs')),
@@ -298,11 +338,11 @@ function collectionCard(c) {
         ibtn('trash', 'Delete collection', async () => { if (await sure('Delete collection', `"${c.name}" and its ${c.items.length} saved tabs will be removed.`)) { state.collections = state.collections.filter((x) => x !== c); commit(); } }))),
     collapsed ? null : (items.length ? items : h('div', { class: 'empty' }, 'Drag open tabs here')),
     collapsed ? null : det);
-  return dropzone(card, (d) => dropOnCollection(c, d));
+  return dropzone(card, (d, side) => dropOnCollection(c, d, side), { kinds: ['tab', 'item', 'col'], axis: { col: 'x' } });
 }
 function spaceView() {
   const sp = space(), f = ui.folderId ? folder(ui.folderId) : null;
-  const folders = subfolders(sp.id, ui.folderId), cols = colsIn(sp.id, ui.folderId);
+  const folders = subfolders(sp.id, ui.folderId), cols = sortCols(colsIn(sp.id, ui.folderId));
   const sug = suggestion();
   const crumbs = f ? h('div', { class: 'crumbs' }, h('button', { onclick: () => go(sp.id) }, sp.name),
     path(f.id).flatMap((p) => ['›', p.id === f.id ? h('span', {}, p.name) : h('button', { onclick: () => go(sp.id, p.id) }, p.name)])) : null;
@@ -515,6 +555,8 @@ function commands() {
     ['Import bookmarks', () => { ui.view = 'import'; render(); }],
     ['Go to sessions', () => { ui.view = 'sessions'; render(); }],
     ['Account and sync', () => { ui.view = 'account'; render(); }],
+    [state.settings.hideSide ? 'Show the left sidebar' : 'Hide the left sidebar', () => { state.settings.hideSide = !state.settings.hideSide; commit(); }],
+    [state.settings.hideTabs ? 'Show the open tabs panel' : 'Hide the open tabs panel', () => { state.settings.hideTabs = !state.settings.hideTabs; commit(); }],
     ['Settings: home page and new tab', () => { ui.view = 'settings'; render(); }],
     ...(cloud.session ? [['Sync now', syncNow]] : []),
     ['New space', newSpace],
@@ -787,9 +829,16 @@ function render() {
   if (!state.spaces.some((s) => s.id === ui.spaceId)) { ui.spaceId = state.spaces[0].id; ui.folderId = null; }
   if (ui.folderId && !folder(ui.folderId)) ui.folderId = null;
   renderSide();
+  const st = state.settings, togglePanel = (key) => { st[key] = !st[key]; commit(); };
+  $('#app').classList.toggle('no-side', !!st.hideSide); $('#app').classList.toggle('no-tabs', !!st.hideTabs);
+  const edgebar = h('div', { class: 'edgebar' },
+    h('button', { class: 'ibtn', 'aria-pressed': String(!st.hideSide), title: st.hideSide ? 'Show the left sidebar' : 'Hide the left sidebar', 'aria-label': st.hideSide ? 'Show the left sidebar' : 'Hide the left sidebar', onclick: () => togglePanel('hideSide') }, ic('panelL', 18)),
+    st.hideSide ? h('button', { class: 'ibtn', title: 'Search or command (Ctrl+K)', 'aria-label': 'Search or command', onclick: openPalette }, ic('search', 18)) : null,
+    h('span', { class: 'grow' }),
+    h('button', { class: 'ibtn', 'aria-pressed': String(!st.hideTabs), title: st.hideTabs ? 'Show open tabs' : 'Hide open tabs', 'aria-label': st.hideTabs ? 'Show open tabs' : 'Hide open tabs', onclick: () => togglePanel('hideTabs') }, ic('panelR', 18)));
   ui.stale = false;
   const view = ui.view === 'sessions' ? sessionsView() : ui.view === 'import' ? importView() : ui.view === 'account' ? accountView() : ui.view === 'settings' ? settingsView() : spaceView();
-  $('#main').replaceChildren(...view.flat().filter(Boolean));
+  $('#main').replaceChildren(edgebar, ...view.flat().filter(Boolean));
   renderTabs();
 }
 let refreshTimer;

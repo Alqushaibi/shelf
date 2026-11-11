@@ -179,12 +179,14 @@ const T = {
   },
   collections: {
     space: (r) => r.spaceId,
-    toRemote: (r) => ({ id: r.id, space_id: r.spaceId, folder_id: r.folderId || null, name: r.name, note: r.note || '', tasks: r.tasks || [], items: r.items || [] }),
-    toLocal: (x) => ({ id: x.id, spaceId: x.space_id, folderId: x.folder_id || null, name: x.name, note: x.note || '', tasks: x.tasks || [], items: x.items || [] }),
+    toRemote: (r) => ({ id: r.id, space_id: r.spaceId, folder_id: r.folderId || null, name: r.name, note: r.note || '', tasks: r.tasks || [], items: r.items || [], position: r.position ?? null }),
+    toLocal: (x) => ({ id: x.id, spaceId: x.space_id, folderId: x.folder_id || null, name: x.name, note: x.note || '', tasks: x.tasks || [], items: x.items || [], ...('position' in x ? { position: x.position } : {}) }),
   },
 };
 const TABLES = ['spaces', 'folders', 'collections'];
-const replace = (target, src) => { for (const k of Object.keys(target)) delete target[k]; Object.assign(target, src); };
+// Keeps the local order of collections when the server copy has no position (database not updated yet).
+const replace = (target, src) => { const pos = target.position; for (const k of Object.keys(target)) delete target[k]; Object.assign(target, src); if (!('position' in src) && pos != null) target.position = pos; };
+let noPositionColumn = false; // set for this page load if the database lacks collections.position
 
 export async function sync(state) {
   const sess = await getSession();
@@ -291,7 +293,17 @@ export async function sync(state) {
   // 4. Push.
   const up = { Prefer: 'resolution=merge-duplicates,return=minimal' };
   for (const l of plan.leave) await rest('DELETE', `space_members?space_id=eq.${l.id}&email=eq.${enc(email)}`);
-  for (const t of TABLES) for (const part of chunks(plan.upserts[t], 200)) await rest('POST', `${t}?on_conflict=id`, part.map((p) => p.row), up);
+  const strip = (row) => { const { position, ...rest } = row; return rest; };
+  for (const t of TABLES) for (const part of chunks(plan.upserts[t], 200)) {
+    const rows = part.map((p) => (t === 'collections' && noPositionColumn ? strip(p.row) : p.row));
+    try { await rest('POST', `${t}?on_conflict=id`, rows, up); }
+    catch (e) {
+      // An older database without the "position" column: sync everything else, keep the order on this browser only.
+      if (t !== 'collections' || noPositionColumn || !/position/i.test(e.message)) throw e;
+      noPositionColumn = true;
+      await rest('POST', `${t}?on_conflict=id`, rows.map(strip), up);
+    }
+  }
   for (const t of TABLES) for (const part of chunks(plan.tombs.filter((x) => x.t === t), 80)) await rest('PATCH', `${t}?id=in.(${part.map((p) => p.id).join(',')})`, { deleted: true, updated_at: Date.now() });
 
   // 5. Mark as uploaded, unless the record changed again while we were pushing.

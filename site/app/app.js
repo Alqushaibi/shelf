@@ -137,7 +137,7 @@ async function save(fn) {
 const space = () => data.spaces.find((s) => s.id === ui.spaceId) || data.spaces[0];
 const folder = (id) => data.folders.find((f) => f.id === id);
 const subfolders = (sid, pid) => data.folders.filter((f) => f.space_id === sid && (f.parent_id || null) === (pid || null)).sort((a, b) => a.name.localeCompare(b.name));
-const colsIn = (sid, fid) => data.collections.filter((c) => c.space_id === sid && (c.folder_id || null) === (fid || null));
+const colsIn = (sid, fid) => data.collections.filter((c) => c.space_id === sid && (c.folder_id || null) === (fid || null)).sort((a, b) => (a.position ?? 1e9) - (b.position ?? 1e9));
 function descendants(fid) { const out = [fid]; for (const f of data.folders.filter((x) => x.parent_id === fid)) out.push(...descendants(f.id)); return out; }
 function path(fid) { const p = []; let f = folder(fid); while (f) { p.unshift(f); f = folder(f.parent_id); } return p; }
 function role(sp) {
@@ -147,7 +147,8 @@ function role(sp) {
 }
 const canEdit = (sp) => role(sp) !== 'viewer';
 const where = (c) => [data.spaces.find((s) => s.id === c.space_id)?.name, ...path(c.folder_id).map((f) => f.name), c.name].filter(Boolean).join(' › ');
-const colRow = (c) => ({ id: c.id, space_id: c.space_id, folder_id: c.folder_id || null, name: c.name, note: c.note || '', tasks: c.tasks || [], items: c.items || [] });
+// The order of collections ("position") is set in the desktop extension; it is sent back unchanged only when the server gave one.
+const colRow = (c) => ({ id: c.id, space_id: c.space_id, folder_id: c.folder_id || null, name: c.name, note: c.note || '', tasks: c.tasks || [], items: c.items || [], ...('position' in c ? { position: c.position ?? null } : {}) });
 const saveCol = (c) => save(() => upsert('collections', colRow(c)));
 
 /* ---------- dialogs ---------- */
