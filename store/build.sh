@@ -21,6 +21,10 @@ printf "export const SUPABASE_URL = '%s';\nexport const SUPABASE_KEY = '%s';\n" 
 ORIGIN=$(printf '%s' "$SUPABASE_URL" | sed -E 's#^(https?://[^/]+).*#\1#')
 jq --arg host "$ORIGIN/*" 'del(.key) | .host_permissions = [$host]' extension/manifest.json > "$OUT/manifest.json"
 
+# The store rejects a manifest description longer than 132 characters.
+LEN=$(jq -r '.description | length' "$OUT/manifest.json")
+if [ "$LEN" -gt 132 ]; then echo "The manifest description is $LEN characters; the store allows at most 132." >&2; exit 1; fi
+
 (cd "$OUT" && zip -qr ../../store-package.zip .)
 echo "Built store-package.zip, version $(jq -r .version "$OUT/manifest.json"):"
 unzip -l store-package.zip | tail -n +4 | head -n -2 | awk '{print "  " $4}'
