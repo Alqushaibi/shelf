@@ -117,3 +117,9 @@ textarea{min-height:64px;resize:vertical}
 #app.no-side #side,#app.no-tabs #tabs{display:none}
 .edgebar{display:flex;align-items:center;gap:4px;margin:-14px -14px -10px}
 .edgebar .ibtn[aria-pressed=false]{color:var(--blue)}
+
+/* row actions float over the end of the row, so hidden buttons do not squeeze the title */
+.card>header,.fcard,.item{position:relative}
+.card>header .acts,.fcard .acts,.item .acts{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:var(--card);border-radius:8px;box-shadow:-10px 0 8px -2px var(--card);pointer-events:none;flex-wrap:nowrap}
+.item .acts{background:var(--bg);box-shadow:-10px 0 8px -2px var(--bg)}
+.card>header:hover .acts,.card>header:focus-within .acts,.fcard:hover .acts,.fcard:focus-within .acts,.item:hover .acts,.item:focus-within .acts{pointer-events:auto}

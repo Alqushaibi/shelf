@@ -256,7 +256,8 @@ function renderSide() {
     return [btn, ...(current ? folderRows(sp.id, null, 0) : [])];
   });
   const asleep = allTabs.filter((t) => t.discarded).length;
-  $('#side').replaceChildren(
+  // filter(Boolean): replaceChildren would print a missing optional item as the word "null"
+  $('#side').replaceChildren(...[
     h('div', { class: 'logo' }, h('img', { src: 'icons/128.png', alt: '', width: 28, height: 28 }), 'Shelf'),
     h('button', { class: 'search', onclick: openPalette }, ic('search'), h('span', { class: 'grow' }, 'Search or command'), h('kbd', {}, 'Ctrl K')),
     h('div', { class: 'nav' }, navBtn('Sessions', 'clock', 'sessions'), navBtn('Import bookmarks', 'download', 'import'), navBtn('Settings', 'gear', 'settings')),
@@ -268,7 +269,7 @@ function renderSide() {
       h('span', { class: 'grow', style: 'min-width:0' }, h('span', { class: 'ellip', style: 'display:block' }, cloud.session ? cloud.session.user.email : 'Sign in to sync'),
         h('span', { class: 'count', style: 'display:block' }, !cloud.session ? 'Stored in this browser only' : cloud.status === 'syncing' ? 'Syncing…' : cloud.status === 'error' ? 'Sync problem' : cloud.last ? 'Synced' : 'Signed in'))),
     h('div', { class: 'sidecard', style: 'margin-top:0' }, h('div', { class: 'row' }, ic('moon'), h('b', {}, `${asleep} tab${asleep === 1 ? '' : 's'} asleep`)),
-      h('div', { class: 'small', style: 'color:var(--sidemute)' }, `${allTabs.length} open across all windows`)));
+      h('div', { class: 'small', style: 'color:var(--sidemute)' }, `${allTabs.length} open across all windows`))].flat().filter(Boolean));
 }
 function donation() {
   const d = site && site.donation;

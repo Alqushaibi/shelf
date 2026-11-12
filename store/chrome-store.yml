@@ -1,0 +1,101 @@
+# Sends a new version of the extension to the Chrome Web Store.
+#
+# Runs when extension/manifest.json gets a new "version" on the main branch, or when started by hand.
+# Every upload goes through Google's review before it reaches users.
+#
+# Needs, under Settings > Secrets and variables > Actions:
+#   Variables: SUPABASE_URL, SUPABASE_KEY (already used by the website), CWS_PUBLISHER_ID, CWS_EXTENSION_ID
+#   Secrets:   CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN
+name: Publish to Chrome Web Store
+
+on:
+  push:
+    branches: [main]
+    paths: ['extension/manifest.json']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chrome-store
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check whether the version changed
+        id: version
+        run: |
+          NEW=$(jq -r .version extension/manifest.json)
+          OLD=$(git show HEAD~1:extension/manifest.json 2>/dev/null | jq -r .version 2>/dev/null || echo none)
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$NEW" != "$OLD" ]; then
+            echo "go=yes" >> "$GITHUB_OUTPUT"; echo "Publishing version $NEW (previous commit had $OLD)."
+          else
+            echo "go=no" >> "$GITHUB_OUTPUT"; echo "Version is still $NEW, so there is nothing to publish."
+          fi
+
+      - name: Build the store package
+        if: steps.version.outputs.go == 'yes'
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ vars.SUPABASE_KEY }}
+        run: bash store/build.sh
+
+      - name: Keep the package with this run
+        if: steps.version.outputs.go == 'yes'
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-package
+          path: store-package.zip
+          retention-days: 30
+
+      - name: Upload and submit for review
+        if: steps.version.outputs.go == 'yes'
+        env:
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+        run: |
+          set -euo pipefail
+          MISSING=""
+          for v in CLIENT_ID CLIENT_SECRET REFRESH_TOKEN PUBLISHER_ID EXTENSION_ID; do
+            if [ -z "${!v:-}" ]; then MISSING="$MISSING CWS_$v"; fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::notice::Chrome Web Store publishing is not set up yet, so nothing was uploaded. Missing:$MISSING. See store/README.md."
+            exit 0
+          fi
+          API="https://chromewebstore.googleapis.com"
+          ITEM="publishers/$PUBLISHER_ID/items/$EXTENSION_ID"
+
+          TOKEN=$(curl -sS https://oauth2.googleapis.com/token \
+            -d "client_id=$CLIENT_ID" -d "client_secret=$CLIENT_SECRET" \
+            -d "refresh_token=$REFRESH_TOKEN" -d "grant_type=refresh_token" | jq -r '.access_token // empty')
+          if [ -z "$TOKEN" ]; then echo "Google did not accept the stored sign-in. Create a new refresh token (store/README.md, step 4)." >&2; exit 1; fi
+          echo "::add-mask::$TOKEN"
+
+          echo "Uploading..."
+          UP=$(curl -sS -X POST -H "Authorization: Bearer $TOKEN" -T store-package.zip "$API/upload/v2/$ITEM:upload")
+          echo "$UP" | jq . || echo "$UP"
+          STATE=$(echo "$UP" | jq -r '.uploadState // empty')
+          for i in $(seq 1 20); do
+            [ "$STATE" = "IN_PROGRESS" ] || break
+            sleep 6
+            STATE=$(curl -sS -H "Authorization: Bearer $TOKEN" "$API/v2/$ITEM:fetchStatus" | jq -r '.lastAsyncUploadState // .uploadState // empty')
+          done
+          if [ "$STATE" != "SUCCEEDED" ]; then echo "The upload was not accepted (state: ${STATE:-unknown}). The message above says why; a common cause is a version number that is not higher than the one in the store." >&2; exit 1; fi
+
+          echo "Submitting for review..."
+          PUB=$(curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Length: 0" "$API/v2/$ITEM:publish")
+          echo "$PUB" | jq . || echo "$PUB"
+          if echo "$PUB" | jq -e '.error' >/dev/null 2>&1; then echo "The store did not accept the submission. See the message above." >&2; exit 1; fi
+          echo "Version ${{ steps.version.outputs.new }} was submitted. It reaches users after Google's review."

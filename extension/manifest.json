@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Shelf \u2013 Tab Organizer",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Organize tabs into spaces, nested folders and collections. Search everything, auto-save sessions, sleep idle tabs and import bookmarks.",
   "minimum_chrome_version": "121",
   "permissions": [
