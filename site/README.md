@@ -16,19 +16,6 @@ A static site. Every word, link, colour and section on it is loaded from your Su
 
 Opening the files directly from your disk (`file://`) does not work; browsers need them served from a web address. To try it on your computer, run `python -m http.server` in this folder and open `http://localhost:8000`.
 
-## Editing
-
-`admin.html` has one panel per part of the site: brand, theme colours, header links, hero, highlights, features, platforms, testimonials, stats, closing banner, donation, questions, footer, and the privacy and terms pages. Lists can be added to, removed from and reordered. Press **Save changes**; visitors see the result on their next page load.
-
-- **Donation**: turn on "Show this section" and paste your donation link (PayPal.me, Ko-fi, Buy Me a Coffee and so on). The same switch shows or hides the Donate button inside the extension.
-- **Get Shelf tiles**: paste the store link into a tile once the extension is listed; until then the tile shows as not yet available.
-- **Stats**: live totals from the database (members, spaces, collections, saved tabs).
-- **Testimonials**: hidden until you add quotes. Only use quotes from real people who agreed.
-- **Privacy and terms**: starter drafts are included and marked DRAFT. Review them before publishing; they are not legal advice.
-
-## Admins
-
-The admin list is the `site_admins` table. Add or remove an email there (Supabase > Table Editor) to change who can edit.
 
 ## Files
 
